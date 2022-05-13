@@ -17,7 +17,7 @@ contract Vanity {
     mapping(string => address) public stringToOwner;
     mapping(uint=>VanityName)  public vanities;
 
-    function registerYourName(string memory _name) public payable returns(bool){
+    function registerYourName(string memory _name) public payable  returns(bool){
         numberOfVanity++;
         require(stringToOwner[_name]==address(0),"Already an Owner of this Name");
         uint price = getPrice(_name);
@@ -34,19 +34,20 @@ contract Vanity {
 
     // if you want to extend  30 minutes  expire time you have to pay 1000 wei again 
 
-    function extendTime(uint id, uint _howMuchTimes) payable public _Exist(id) _isOwner(id) returns(bool) {
-        uint price = _howMuchTimes * 1000 ;
-        uint increaseTime= _howMuchTimes*30*60;
+    function extendTime(uint id, uint _howMuchTimes) payable public _Exist(id) _isOwner(id) {
+        uint price = _howMuchTimes * (1 ether) ;
+        uint increaseTime= _howMuchTimes*1800;
         require(msg.value==price,"Not sufficient balance");
         VanityName storage vanityname= vanities[id];
         uint remaingTime= (block.timestamp-vanityname.expire);
         if(remaingTime<=0){
             vanityname.valid=false;
             stringToOwner[vanityname.name]=address(0);
-            return true;
+            
         }
         vanityname.expire=  remaingTime + increaseTime;
-        return true;
+        payable(admin).transfer(price);
+        
     }   
 
     function vanityIsValid(uint id) view public returns(bool){
@@ -60,13 +61,13 @@ contract Vanity {
         uint price;
         uint len = name.length;
         if(len>0 && len<=10){
-            price= 10000 wei;
+            price= 10 ether;
         }
         else if(len>10 && len<=20){
-            price = 20000 wei ;
+            price = 20 ether  ;
 
         }else if(len>20){
-            price = 50000 wei;
+            price = 50 ether;
         }
         return price;
     }
@@ -77,6 +78,10 @@ contract Vanity {
     modifier _isOwner(uint id ){
         VanityName storage vanityname= vanities[id];
         require(vanityname.owner==msg.sender,"You are not the owner of this name");
+        _;
+    }
+    modifier isAdmin(){
+        require(admin==msg.sender,"You are not contract Holder");
         _;
     }
 }

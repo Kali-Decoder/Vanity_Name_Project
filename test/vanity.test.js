@@ -33,9 +33,16 @@ contract("Testing Vanity Smart Contract ...",(accounts)=>{
         let  isValid = await vanityContract.vanityIsValid(1);
        assert.equal(isValid,true);
     });
+
     it("Should increase time period of that time ",async ()=>{
-        let tx = await vanityContract.extendTime(1,4,{from:accounts[2],value:'4000',gas:'1000000'});// 4 times i have to increase the time so 4 * 30 * 60 = 2700 seconds increase 
+        let tx = await vanityContract.extendTime(1,4,{from:accounts[2],value:'4000'});
+        // @ 4 times i have to increase the time by 4 * 30 * 60 = 2700 seconds increase 
         console.log(tx);
 
     })
+
+    it("Should get Vanity ",async ()=>{
+        const tx = await vanityContract.vanities(1);
+        console.log(tx.expire);
+    });
 })
