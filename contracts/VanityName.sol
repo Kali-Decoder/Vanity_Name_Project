@@ -3,85 +3,109 @@ pragma solidity ^0.8.11;
 
 contract Vanity {
     address public admin;
-    uint public numberOfVanity;
-    constructor(){
-        admin= msg.sender;
+    uint256 public numberOfVanity;
+
+    constructor() {
+        admin = msg.sender;
     }
-    struct VanityName{
-        uint id;
+
+    struct VanityName {
+        uint256 id;
         string name;
         address owner;
-        uint expire;
+        uint256 expire;
         bool valid;
     }
     mapping(string => address) public stringToOwner;
-    mapping(uint=>VanityName)  public vanities;
+    mapping(uint256 => VanityName) public vanities;
 
-    function registerYourName(string memory _name) public payable  returns(bool){
+    receive() external payable {}
+
+    function registerYourName(string memory _name)
+        public
+        payable
+        returns (bool)
+    {
         numberOfVanity++;
-        require(stringToOwner[_name]==address(0),"Already an Owner of this Name");
-        uint price = getPrice(_name);
-        require(msg.value==price,"You dont have enough money to purchase this domain");
-        vanities[numberOfVanity]= VanityName(numberOfVanity,_name,msg.sender,block.timestamp+ 3600,true);// 1 hour validity for this time
-        stringToOwner[_name]=msg.sender;
-        payable(admin).transfer(price);
+        require(
+            stringToOwner[_name] == address(0),
+            "Already an Owner of this Name"
+        );
+        uint256 price = getPrice(_name);
+        require(
+            msg.value == price,
+            "You dont have enough money to purchase this domain"
+        );
+        vanities[numberOfVanity] = VanityName(
+            numberOfVanity,
+            _name,
+            msg.sender,
+            block.timestamp + 3600,
+            true
+        ); // 1 hour validity for this time
+        stringToOwner[_name] = msg.sender;
         return true;
     }
 
-    function getPrice(string memory _name) public pure returns(uint){
+    function getPrice(string memory _name) public pure returns (uint256) {
         return _calcAmount(_name);
     }
 
-    // if you want to extend  30 minutes  expire time you have to pay 1000 wei again 
+    // if you want to extend  30 minutes  expire time you have to pay 1000 wei again
 
-    function extendTime(uint id, uint _howMuchTimes) payable public _Exist(id) _isOwner(id) {
-        uint price = _howMuchTimes * (1 ether) ;
-        uint increaseTime= _howMuchTimes*1800;
-        require(msg.value==price,"Not sufficient balance");
-        VanityName storage vanityname= vanities[id];
-        uint remaingTime= (block.timestamp-vanityname.expire);
-        if(remaingTime<=0){
-            vanityname.valid=false;
-            stringToOwner[vanityname.name]=address(0);
-            
-        }
-        vanityname.expire=  remaingTime + increaseTime;
-        payable(admin).transfer(price);
-        
-    }   
+    function increaseValidity(uint256 id, uint256 _times)
+        public
+        payable
+        _Exist(id)
+        _isOwner(id)
+        returns (bool)
+    {   
+        uint price = _times * (1 ether);
+        require(price==msg.value,"Please give me more money");
+        VanityName storage vanity = vanities[id];
+        uint256 increaseTime = _times * (1800); 
+        vanity.expire = vanity.expire + increaseTime;
 
-    function vanityIsValid(uint id) view public returns(bool){
-        VanityName storage vanity= vanities[id];
+        return true;
+    }
+
+    function vanityIsValid(uint256 id) public view returns (bool) {
+        VanityName storage vanity = vanities[id];
         return vanity.valid;
     }
-    
 
-    function _calcAmount(string memory _name) pure private returns(uint){
-        bytes memory name =  bytes(_name);
-        uint price;
-        uint len = name.length;
-        if(len>0 && len<=10){
-            price= 10 ether;
-        }
-        else if(len>10 && len<=20){
-            price = 20 ether  ;
-
-        }else if(len>20){
-            price = 50 ether;
+    function _calcAmount(string memory _name) private pure returns (uint256) {
+        bytes memory name = bytes(_name);
+        uint256 price;
+        uint256 len = name.length;
+        if (len > 0 && len <= 10) {
+            price = 1 ether;
+        } else if (len > 10 && len <= 20) {
+            price = 2 ether;
+        } else if (len > 20) {
+            price = 5 ether;
         }
         return price;
     }
-    modifier _Exist(uint id){
-        require(id>0 && id<= numberOfVanity,"Vanity is not exist ");
+
+    modifier _Exist(uint256 id) {
+        require(id > 0 && id <= numberOfVanity, "Vanity is not exist ");
         _;
     }
-    modifier _isOwner(uint id ){
-        VanityName storage vanityname= vanities[id];
-        require(vanityname.owner==msg.sender,"You are not the owner of this name");
+    modifier _isOwner(uint256 id) {
+        VanityName storage vanityname = vanities[id];
+        require(
+            vanityname.owner == msg.sender,
+            "You are not the owner of this name"
+        );
         _;
     }
-    modifier isAdmin(){
-        require(admin==msg.sender,"You are not contract Holder");
+    modifier isAdmin() {
+        require(admin == msg.sender, "You are not contract Holder");
         _;
+    }
+
+    function getBal() public view returns (uint256) {
+        return address(this).balance;
     }
 }
