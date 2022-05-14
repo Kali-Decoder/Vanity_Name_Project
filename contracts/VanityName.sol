@@ -64,7 +64,11 @@ contract Vanity {
         require(price==msg.value,"Please give me more money");
         VanityName storage vanity = vanities[id];
         uint256 increaseTime = _times * (1800); 
-        vanity.expire = vanity.expire + increaseTime;
+        uint remainingTime= block.timestamp- vanity.expire;
+        if(remainingTime<=0){
+            remainingTime=0;
+        }
+        vanity.expire = remainingTime + increaseTime;
 
         return true;
     }

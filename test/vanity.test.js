@@ -51,5 +51,6 @@ contract("Testing Vanity Smart Contract ...", (accounts) => {
     const tx = await vanityContract.vanities(1);
     // console.log(tx);
     console.log(x);
+    
   });
 });
